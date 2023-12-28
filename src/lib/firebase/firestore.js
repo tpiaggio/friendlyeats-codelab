@@ -21,7 +21,7 @@ export async function updateRestaurantImageReference(
   restaurantId,
   publicImageUrl
 ) {
-  const restaurantRef = doc(db, "restaurants", restaurantId);
+  const restaurantRef = doc(collection(db, "restaurants"), restaurantId);
   if (restaurantRef) {
     await updateDoc(restaurantRef, {photo: publicImageUrl});
   }
@@ -53,7 +53,7 @@ const updateWithRating = async (
 
 export async function addReviewToRestaurant(db, restaurantId, review) {
   if (!restaurantId) {
-    throw new Error("No restaurant ID was provided.");
+    throw new Error("No restaurant ID has been provided.");
   }
 
   if (!review) {
@@ -61,17 +61,18 @@ export async function addReviewToRestaurant(db, restaurantId, review) {
   }
 
   try {
-    const docRef = doc(db, "restaurants", restaurantId);
+    const docRef = doc(collection(db, "restaurants"), restaurantId);
     const newRatingDocument = doc(
       collection(db, `restaurants/${restaurantId}/ratings`)
     );
 
+    // corrected line
     await runTransaction(db, (transaction) =>
       updateWithRating(transaction, docRef, newRatingDocument, review)
     );
   } catch (error) {
     console.error(
-      "There was an error adding the rating to the restaurant.",
+      "There was an error adding the rating to the restaurant",
       error
     );
     throw error;
@@ -151,7 +152,7 @@ export async function getRestaurantById(restaurantId) {
 
 export function getRestaurantSnapshotById(restaurantId, cb) {
   if (!restaurantId) {
-    console.log("Error: Invalid restaurantId received: ", restaurantId);
+    console.log("Error: Invalid ID received: ", restaurantId);
     return;
   }
 
@@ -162,11 +163,10 @@ export function getRestaurantSnapshotById(restaurantId, cb) {
 
   const docRef = doc(db, "restaurants", restaurantId);
   const unsubscribe = onSnapshot(docRef, (docSnap) => {
-    const result = {
+    cb({
       ...docSnap.data(),
       timestamp: docSnap.data().timestamp.toDate(),
-    };
-    cb(result);
+    });
   });
   return unsubscribe;
 }
