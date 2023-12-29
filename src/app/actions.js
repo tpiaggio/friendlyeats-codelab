@@ -14,6 +14,7 @@ import {cookies} from "next/headers";
 
 export async function handleReviewFormSubmission(data) {
   const {app} = await getAuthenticatedAppForUser();
+  console.log("handleReviewFormSubmission - app", app);
   const db = getFirestore(app);
 
   await addReviewToRestaurant(db, data.get("restaurantId"), {
@@ -26,11 +27,13 @@ export async function handleReviewFormSubmission(data) {
 }
 
 export async function createSessionCookie(idToken) {
+  console.log("createSessionCookie");
   const adminAuth = await getAdminAuth();
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
   const sessionCookie = await adminAuth.createSessionCookie(idToken, {
     expiresIn,
   });
+  console.log("sessionCookie", sessionCookie);
   const options = {
     name: "__session",
     value: sessionCookie,
@@ -40,10 +43,12 @@ export async function createSessionCookie(idToken) {
   };
 
   //Add the cookie to the browser
-  cookies().set(options);
+  const responseCookies = cookies().set(options);
+  console.log("responseCookies", responseCookies);
 }
 
 export async function deleteSessionCookie() {
   //Remove the cookie from the browser
+  console.log("session cookie", cookies().get("__session"));
   cookies().delete("__session");
 }

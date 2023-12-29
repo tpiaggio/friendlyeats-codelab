@@ -17,6 +17,10 @@ export async function getAdminAuth() {
   const {getAuth: getAdminAuth} = await import("firebase-admin/auth");
 
   const {credential} = await import("firebase-admin");
+  console.log(
+    "default credential",
+    credential.applicationDefault().clientEmail
+  );
 
   const ADMIN_APP_NAME = "firebase-frameworks";
   const adminApp =
@@ -52,8 +56,10 @@ export async function getAuthenticatedAppForUser(session = null) {
   const adminAuth = await getAdminAuth();
 
   const decodedIdToken = await adminAuth.verifySessionCookie(session);
+  console.log("decodedIdToken", decodedIdToken);
 
   const app = initializeAuthenticatedApp(decodedIdToken.uid);
+  console.log("initializeAuthenticatedApp", app);
   const auth = getAuth(app);
 
   // handle revoked tokens
@@ -73,13 +79,16 @@ export async function getAuthenticatedAppForUser(session = null) {
 
     await signInWithCustomToken(auth, customToken);
   }
-  console.log("server: ", app);
   return {app, currentUser: auth.currentUser};
 }
 
 async function getAppRouterSession() {
   // dynamically import to prevent import errors in pages router
   const {cookies} = await import("next/headers");
+  console.log(
+    "getAppRouterSession - cookiesSession",
+    cookies().get("__session")
+  );
 
   try {
     return cookies().get("__session")?.value;
