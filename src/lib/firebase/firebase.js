@@ -10,14 +10,7 @@ export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
-export async function getAuthenticatedAppForUser(session = null) {
-  if (typeof window !== "undefined") {
-    // client
-    console.log("client: ", firebaseApp);
-
-    return {app: firebaseApp, user: auth.currentUser.toJSON()};
-  }
-
+export async function getAdminAuth() {
   const {initializeApp: initializeAdminApp, getApps: getAdminApps} =
     await import("firebase-admin/app");
 
@@ -36,6 +29,17 @@ export async function getAuthenticatedAppForUser(session = null) {
     );
 
   const adminAuth = getAdminAuth(adminApp);
+  return adminAuth;
+}
+
+export async function getAuthenticatedAppForUser(session = null) {
+  if (typeof window !== "undefined") {
+    // client
+    console.log("client: ", firebaseApp);
+
+    return {app: firebaseApp, user: auth.currentUser.toJSON()};
+  }
+
   const noSessionReturn = {app: null, currentUser: null};
 
   if (!session) {
@@ -44,6 +48,8 @@ export async function getAuthenticatedAppForUser(session = null) {
 
     if (!session) return noSessionReturn;
   }
+
+  const adminAuth = await getAdminAuth();
 
   const decodedIdToken = await adminAuth.verifySessionCookie(session);
 
