@@ -10,17 +10,20 @@ export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
 
-export async function getAdminAuth() {
+export async function getAuthenticatedAppForUser(session = null) {
+  if (typeof window !== "undefined") {
+    // client
+    console.log("client: ", firebaseApp);
+
+    return {app: firebaseApp, user: auth.currentUser.toJSON()};
+  }
+
   const {initializeApp: initializeAdminApp, getApps: getAdminApps} =
     await import("firebase-admin/app");
 
   const {getAuth: getAdminAuth} = await import("firebase-admin/auth");
 
   const {credential} = await import("firebase-admin");
-  console.log(
-    "default credential",
-    credential.applicationDefault().clientEmail
-  );
 
   const ADMIN_APP_NAME = "firebase-frameworks";
   const adminApp =
@@ -33,17 +36,6 @@ export async function getAdminAuth() {
     );
 
   const adminAuth = getAdminAuth(adminApp);
-  return adminAuth;
-}
-
-export async function getAuthenticatedAppForUser(session = null) {
-  if (typeof window !== "undefined") {
-    // client
-    console.log("client: ", firebaseApp);
-
-    return {app: firebaseApp, user: auth.currentUser.toJSON()};
-  }
-
   const noSessionReturn = {app: null, currentUser: null};
 
   if (!session) {
@@ -53,13 +45,9 @@ export async function getAuthenticatedAppForUser(session = null) {
     if (!session) return noSessionReturn;
   }
 
-  const adminAuth = await getAdminAuth();
-
   const decodedIdToken = await adminAuth.verifySessionCookie(session);
-  console.log("decodedIdToken", decodedIdToken);
 
   const app = initializeAuthenticatedApp(decodedIdToken.uid);
-  console.log("initializeAuthenticatedApp", app);
   const auth = getAuth(app);
 
   // handle revoked tokens
@@ -85,10 +73,10 @@ export async function getAuthenticatedAppForUser(session = null) {
 async function getAppRouterSession() {
   // dynamically import to prevent import errors in pages router
   const {cookies} = await import("next/headers");
-  console.log(
-    "getAppRouterSession - cookiesSession",
-    cookies().get("__session")
-  );
+  // console.log(
+  //   "getAppRouterSession - cookiesSession",
+  //   cookies().get("__session")
+  // );
 
   try {
     return cookies().get("__session")?.value;
